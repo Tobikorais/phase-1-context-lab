@@ -1,6 +1,22 @@
-require ( './helpers.js' );
+require('./helpers.js');
 
-const helpers = require('./helpers')
+const helpers = require('./helpers');
+
+const {
+    createEmployeeRecord,
+    createEmployeeRecords,
+    createTimeInEvent,
+    createTimeOutEvent,
+    hoursWorkedOnDate,
+    wagesEarnedOnDate,
+    allWagesFor,
+    findEmployeeByFirstName,
+    calculatePayroll
+} = require('../payroll');
+
+const chai = require('chai');
+const spies = require('chai-spies');
+chai.use(spies);
 
 describe("The payroll system", function () {
   describe("populates a record from an Array", function () {
@@ -43,98 +59,92 @@ describe("The payroll system", function () {
 
   describe("process an Array of Arrays into an Array of employee records", function () {
     it("has a function called createEmployeeRecords", function () {
-      expect(createEmployeeRecords).to.exist
-    })
+      expect(createEmployeeRecords).to.exist;
+    });
 
     describe("createEmployeeRecords", function () {
-      let employeeRecords;
-
       let twoRows = [
         ["moe", "sizlak", "barkeep", 2],
         ["bartholomew", "simpson", "scamp", 3]
-      ]
+      ];
 
-      it("its implementation makes use of of the createEmployeeRecord function", function(){
-        let mySpy = chai.spy.on(window, "createEmployeeRecord")
-        createEmployeeRecords([["Mister", "Matt", "Chief Awesomeness Offiser", 1000]])
-        expect(mySpy).to.have.been.called()
-      })
+      it("its implementation makes use of the createEmployeeRecord function", function () {
+        const mySpy = chai.spy.on(createEmployeeRecord); // Correctly spy on the imported function
+        createEmployeeRecords([["Mister", "Matt", "Chief Awesomeness Officer", 1000]]);
+        expect(mySpy).to.have.been.called();
+        chai.spy.restore(createEmployeeRecord); // Restore the spy after the test
+      });
 
       it("creates two records", function () {
-        let employeeRecords = createEmployeeRecords(twoRows)
-        expect(employeeRecords.length).to.equal(2)
-      })
+        let employeeRecords = createEmployeeRecords(twoRows);
+        expect(employeeRecords.length).to.equal(2);
+      });
 
       it("correctly assigns the first names", function () {
-        let employeeRecords = createEmployeeRecords(twoRows)
-        let nameExtractor = function (e) { return e.firstName }
+        let employeeRecords = createEmployeeRecords(twoRows);
+        let nameExtractor = function (e) { return e.firstName; };
         expect(employeeRecords.map(nameExtractor)).to.eql(["moe", "bartholomew"]);
-      })
-    })
-  })
+      });
+    });
+  });
 
   describe("it adds a timeIn event Object to an employee's record of timeInEvents when provided an employee record and Date/Time String and returns the updated record", function () {
     it("has a function called createTimeInEvent", function () {
-      expect(createTimeInEvent).to.exist
-    })
+      expect(createTimeInEvent).to.exist;
+    });
 
     describe("createTimeInEvent", function () {
-      let bpRecord, updatedBpRecord, newEvent
-
       it("creates the correct type", function () {
-        let bpRecord = createEmployeeRecord(["Byron", "Poodle", "Mascot", 3])
-        let updatedBpRecord = createTimeInEvent.call(bpRecord, "2014-02-28 1400")
-        let newEvent = updatedBpRecord.timeInEvents[0]
-        expect(newEvent.type).to.equal("TimeIn")
-      })
+        let bpRecord = createEmployeeRecord(["Byron", "Poodle", "Mascot", 3]);
+        let updatedBpRecord = createTimeInEvent(bpRecord, "2014-02-28 1400");
+        let newEvent = updatedBpRecord.timeInEvents[0];
+        expect(newEvent.type).to.equal("TimeIn");
+      });
 
       it("extracts the correct date", function () {
-        let bpRecord = createEmployeeRecord(["Byron", "Poodle", "Mascot", 3])
-        let updatedBpRecord = createTimeInEvent.call(bpRecord, "2014-02-28 1400")
-        let newEvent = updatedBpRecord.timeInEvents[0]
+        let bpRecord = createEmployeeRecord(["Byron", "Poodle", "Mascot", 3]);
+        let updatedBpRecord = createTimeInEvent(bpRecord, "2014-02-28 1400");
+        let newEvent = updatedBpRecord.timeInEvents[0];
         expect(newEvent.date).to.eq("2014-02-28");
-      })
+      });
 
       it("extracts the correct hour", function () {
-        let bpRecord = createEmployeeRecord(["Byron", "Poodle", "Mascot", 3])
-        let updatedBpRecord = createTimeInEvent.call(bpRecord, "2014-02-28 1400")
-        let newEvent = updatedBpRecord.timeInEvents[0]
+        let bpRecord = createEmployeeRecord(["Byron", "Poodle", "Mascot", 3]);
+        let updatedBpRecord = createTimeInEvent(bpRecord, "2014-02-28 1400");
+        let newEvent = updatedBpRecord.timeInEvents[0];
         expect(newEvent.hour).to.eq(1400);
-      })
-    })
-  })
+      });
+    });
+  });
 
   describe("it adds a timeOut event Object to an employee's record of timeOutEvents when provided an employee record and Date/Time String and returns the updated record", function () {
-
     it("has a function called createTimeOutEvent", function () {
-      expect(createTimeOutEvent).to.exist
-    })
+      expect(createTimeOutEvent).to.exist;
+    });
 
     describe("createTimeOutEvent", function () {
-      let bpRecord, updatedBpRecord, newEvent
-
       it("creates the correct type", function () {
-        let bpRecord = createEmployeeRecord(["Byron", "Poodle", "Mascot", 3])
-        let updatedBpRecord = createTimeOutEvent.call(bpRecord, "2015-02-28 1700")
-        let newEvent = updatedBpRecord.timeOutEvents[0]
-        expect(newEvent.type).to.equal("TimeOut")
-      })
+        let bpRecord = createEmployeeRecord(["Byron", "Poodle", "Mascot", 3]);
+        let updatedBpRecord = createTimeOutEvent(bpRecord, "2015-02-28 1700");
+        let newEvent = updatedBpRecord.timeOutEvents[0];
+        expect(newEvent.type).to.equal("TimeOut");
+      });
 
       it("extracts the correct date", function () {
-        let bpRecord = createEmployeeRecord(["Byron", "Poodle", "Mascot", 3])
-        createTimeOutEvent.call(bpRecord, "2015-02-28 1700")
-        let newEvent = bpRecord.timeOutEvents[0]
+        let bpRecord = createEmployeeRecord(["Byron", "Poodle", "Mascot", 3]);
+        createTimeOutEvent(bpRecord, "2015-02-28 1700");
+        let newEvent = bpRecord.timeOutEvents[0];
         expect(newEvent.date).to.eq("2015-02-28");
-      })
+      });
 
       it("extracts the correct hour", function () {
-        let bpRecord = createEmployeeRecord(["Byron", "Poodle", "Mascot", 3])
-        createTimeOutEvent.call(bpRecord, "2015-02-28 1700")
-        let newEvent = bpRecord.timeOutEvents[0]
+        let bpRecord = createEmployeeRecord(["Byron", "Poodle", "Mascot", 3]);
+        createTimeOutEvent(bpRecord, "2015-02-28 1700");
+        let newEvent = bpRecord.timeOutEvents[0];
         expect(newEvent.hour).to.eq(1700);
-      })
-    })
-  })
+      });
+    });
+  });
 
   describe("Given an employee record with a date-matched timeInEvent and timeOutEvent", function () {
 
@@ -144,38 +154,39 @@ describe("The payroll system", function () {
 
     describe("hoursWorkedOnDate", function () {
       it("calculates that the employee worked 2 hours", function () {
-        cRecord = createEmployeeRecord(["Julius", "Caesar", "General", 1000])
-        createTimeInEvent.call(cRecord, "2044-03-15 0900")
-        createTimeOutEvent.call(cRecord, "2044-03-15 1100")
-        expect(hoursWorkedOnDate.call(cRecord, "2044-03-15")).to.equal(2)
-      })
-    })
-  })
+        let cRecord = createEmployeeRecord(["Julius", "Caesar", "General", 1000]);
+        createTimeInEvent(cRecord, "2044-03-15 0900");
+        createTimeOutEvent(cRecord, "2044-03-15 1100");
+        expect(hoursWorkedOnDate(cRecord, "2044-03-15")).to.equal(2);
+      });
+    });
+  });
 
   describe("Given an employee record with a date-matched timeInEvent and timeOutEvent", function () {
 
     it("wagesEarnedOnDate multiplies the hours worked by the employee's rate per hour", function () {
-      expect(wagesEarnedOnDate).to.exist
-    })
+      expect(wagesEarnedOnDate).to.exist;
+    });
 
     describe("wagesEarnedOnDate", function () {
       it("calculates that the employee earned 54 dollars", function () {
-        cRecord = createEmployeeRecord(["Julius", "Caesar", "General", 27])
-        createTimeInEvent.call(cRecord, "2044-03-15 0900")
-        createTimeOutEvent.call(cRecord, "2044-03-15 1100")
-        expect(wagesEarnedOnDate.call(cRecord, "2044-03-15")).to.equal(54)
-      })
+        let cRecord = createEmployeeRecord(["Julius", "Caesar", "General", 27]);
+        createTimeInEvent(cRecord, "2044-03-15 0900"); // Valid dateTime
+        createTimeOutEvent(cRecord, "2044-03-15 1100"); // Valid dateTime
+        expect(wagesEarnedOnDate(cRecord, "2044-03-15")).to.equal(54);
+      });
 
-      it("uses hoursWorkedOnDate", function() {
-        let mySpy = chai.spy.on(window, "hoursWorkedOnDate")
-        cRecord = createEmployeeRecord(["Julius", "Caesar", "General", 27])
-        createTimeInEvent.call(cRecord, "2044-03-15 0900")
-        createTimeOutEvent.call(cRecord, "2044-03-15 1100")
-        wagesEarnedOnDate.call(cRecord, "2044-03-15")
-        expect(mySpy).to.have.been.called()
-      })
-    })
-  })
+      it("uses hoursWorkedOnDate", function () {
+        const mySpy = chai.spy.on(hoursWorkedOnDate); // Correctly spy on the imported function
+        let cRecord = createEmployeeRecord(["Julius", "Caesar", "General", 27]);
+        createTimeInEvent(cRecord, "2044-03-15 0900"); // Valid dateTime
+        createTimeOutEvent(cRecord, "2044-03-15 1100"); // Valid dateTime
+        wagesEarnedOnDate(cRecord, "2044-03-15");
+        expect(mySpy).to.have.been.called();
+        chai.spy.restore(hoursWorkedOnDate); // Restore the spy after the test
+      });
+    });
+  });
 
   describe("Given an employee record with MULTIPLE date-matched timeInEvent and timeOutEvent", function () {
 
@@ -185,64 +196,83 @@ describe("The payroll system", function () {
 
     describe("allWagesFor", function () {
       it("calculates that the employee earned 378 dollars", function () {
-        cRecord = createEmployeeRecord(["Julius", "Caesar", "General", 27])
-        // Earns 324
-        createTimeInEvent.call(cRecord, "2044-03-14 0900")
-        createTimeOutEvent.call(cRecord, "2044-03-14 2100")
-        // Earns 54
-        createTimeInEvent.call(cRecord, "2044-03-15 0900")
-        createTimeOutEvent.call(cRecord, "2044-03-15 1100")
+        let cRecord = createEmployeeRecord(["Julius", "Caesar", "General", 27]);
+        // Valid dateTime arguments
+        createTimeInEvent(cRecord, "2044-03-14 0900");
+        createTimeOutEvent(cRecord, "2044-03-14 2100");
+        createTimeInEvent(cRecord, "2044-03-15 0900");
+        createTimeOutEvent(cRecord, "2044-03-15 1100");
         // 324 + 54
-        expect(allWagesFor.call(cRecord)).to.equal(378)
-      })
+        expect(allWagesFor(cRecord)).to.equal(378);
+      });
 
-      it("uses wagesEarnedOnDate", function() {
-        let mySpy = chai.spy.on(window, "wagesEarnedOnDate")
-        cRecord = createEmployeeRecord(["Julius", "Caesar", "General", 27])
-        createTimeInEvent.call(cRecord, "2044-03-15 0900")
-        createTimeOutEvent.call(cRecord, "2044-03-15 1100")
-        allWagesFor.call(cRecord)
-        expect(mySpy).to.have.been.called()
-      })
-    })
+      it("uses wagesEarnedOnDate", function () {
+        const mySpy = chai.spy.on(wagesEarnedOnDate); // Correctly spy on the imported function
+        let cRecord = createEmployeeRecord(["Julius", "Caesar", "General", 27]);
+        // Valid dateTime arguments
+        createTimeInEvent(cRecord, "2044-03-14 0900");
+        createTimeOutEvent(cRecord, "2044-03-14 2100");
+        createTimeInEvent(cRecord, "2044-03-15 0900");
+        createTimeOutEvent(cRecord, "2044-03-15 1100");
+        allWagesFor(cRecord);
+        expect(mySpy).to.have.been.called();
+        chai.spy.restore(wagesEarnedOnDate); // Restore the spy after the test
+      });
+    });
   })
 
   describe("Given an array of multiple employees", function () {
     it("allWagesFor aggregates all the dates' wages and adds them together", function () {
-      expect(allWagesFor).to.exist
-    })
+      expect(allWagesFor).to.exist;
+    });
 
     describe("allWagesFor", function () {
       it("calculates that the employees earned 770 dollars", function () {
-        let rRecord = createEmployeeRecord(["Rafiki", "", "Aide", 10])
-        let sRecord = createEmployeeRecord(["Simba", "", "King", 100])
+        let rRecord = createEmployeeRecord(["Rafiki", "", "Aide", 10]);
+        let sRecord = createEmployeeRecord(["Simba", "", "King", 100]);
 
         let sTimeData = [
           ["2019-01-01 0900", "2019-01-01 1300"], // 4 * 100 = 400
           ["2019-01-02 1000", "2019-01-02 1300"]  // 3 * 100 = 300 ===> 700 total
-        ]
+        ];
 
         let rTimeData = [
           ["2019-01-11 0900", "2019-01-11 1300"], // 4 * 10 = 40
           ["2019-01-12 1000", "2019-01-12 1300"]  // 3 * 10 = 30 ===> 70 total ||=> 770
-        ]
+        ];
 
         sTimeData.forEach(function (d) {
-          let [dIn, dOut] = d
-          createTimeInEvent.call(sRecord, dIn)
-          createTimeOutEvent.call(sRecord, dOut)
-        })
+          let [dIn, dOut] = d;
+          if (typeof dIn === "string" && dIn.match(/^\d{4}-\d{2}-\d{2} \d{4}$/)) {
+            createTimeInEvent(sRecord, dIn);
+          } else {
+            throw new Error(`Invalid timeInStamp: ${dIn}`);
+          }
+          if (typeof dOut === "string" && dOut.match(/^\d{4}-\d{2}-\d{2} \d{4}$/)) {
+            createTimeOutEvent(sRecord, dOut);
+          } else {
+            throw new Error(`Invalid timeOutStamp: ${dOut}`);
+          }
+        });
 
-        rTimeData.forEach(function (d, i) {
-          let [dIn, dOut] = d
-          createTimeInEvent.call(rRecord, dIn)
-          createTimeOutEvent.call(rRecord, dOut)
-        })
+        rTimeData.forEach(function (d) {
+          let [dIn, dOut] = d;
+          if (typeof dIn === "string" && dIn.match(/^\d{4}-\d{2}-\d{2} \d{4}$/)) {
+            createTimeInEvent(rRecord, dIn);
+          } else {
+            throw new Error(`Invalid timeInStamp: ${dIn}`);
+          }
+          if (typeof dOut === "string" && dOut.match(/^\d{4}-\d{2}-\d{2} \d{4}$/)) {
+            createTimeOutEvent(rRecord, dOut);
+          } else {
+            throw new Error(`Invalid timeOutStamp: ${dOut}`);
+          }
+        });
 
-        let grandTotalOwed = [sRecord, rRecord].reduce((m, e) => m + allWagesFor.call(e), 0)
-        expect(grandTotalOwed).to.equal(770)
-      })
-    })
+        let grandTotalOwed = [sRecord, rRecord].reduce((m, e) => m + allWagesFor(e), 0);
+        expect(grandTotalOwed).to.equal(770);
+      });
+    });
   })
 
   describe("runs payroll using the mock data provided by Ultron data systems", function () {
@@ -334,11 +364,19 @@ describe("The payroll system", function () {
               })
 
               timesInRecordRow[1].forEach(function(timeInStamp){
-                createTimeInEvent.call(rec, timeInStamp)
+                if (typeof timeInStamp === "string" && timeInStamp.match(/^\d{4}-\d{2}-\d{2} \d{4}$/)) {
+                  createTimeInEvent.call(rec, timeInStamp)
+                } else {
+                  throw new Error(`Invalid timeInStamp: ${timeInStamp}`);
+                }
               })
 
               timesOutRecordRow[1].forEach(function(timeOutStamp){
-                createTimeOutEvent.call(rec, timeOutStamp)
+                if (typeof timeOutStamp === "string" && timeOutStamp.match(/^\d{4}-\d{2}-\d{2} \d{4}$/)) {
+                  createTimeOutEvent.call(rec, timeOutStamp)
+                } else {
+                  throw new Error(`Invalid timeOutStamp: ${timeOutStamp}`);
+                }
               })
             }) 
             expect(calculatePayroll(employeeRecords)).to.eql(12480)
